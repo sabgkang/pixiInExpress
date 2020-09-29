@@ -1,0 +1,217 @@
+<html>
+   <head>
+      <meta charset="UTF-8">
+      <title>Parallax Scrolling Demo</title>
+<!--
+      <style>
+         body { background-color: #000000; }
+         canvas { background-color: #222222; }
+      </style>
+-->
+   </head>
+   <body onload="init();">
+      
+      <div id="app" style="text-align:center"></div> TEST <br>
+      <div id="app1" style="text-align:center"></div> TEST1 <br>
+       
+      <script src="https://kendo.cdn.telerik.com/2020.2.617/js/jquery.min.js"></script>
+            
+      <!--v5.3.3 不相容 V4-->      
+      <script src="pixi.js-master/bin/v5.3.3/pixi.js"></script>           
+           
+      <script src="pixi.js-master/plugins/pixi-spine.js"></script>
+            
+      <script>
+         var app; 
+         var pixieU, pixieD;
+         var basicText;
+         function init() {
+            var options = new Object();
+            options.width=800;            
+            options.height=300;
+           
+            app = new PIXI.Application(options); // default wxh=800x600
+            app1 = new PIXI.Application(options); // default wxh=800x600
+            $("#app").append(app.view); //document.body.appendChild(app.view);
+            $("#app1").append(app1.view); //document.body.appendChild(app.view);
+
+            app.stop();
+        
+           
+            // load spine data
+            app.loader
+                .add('pixie', 'resources/pixi-spine/pixie.json')
+                .load(onAssetsLoaded);
+
+            let postitionU = 0;
+            let postitionD = 0;
+            let backgroundU;
+            let backgroundU2;
+            let foregroundU;
+            let foregroundU2;
+            let backgroundD;
+            let backgroundD2;
+            let foregroundD;
+            let foregroundD2;
+           
+            app.stage.interactive = true;
+
+            function onAssetsLoaded(loader, res) {
+                backgroundU = PIXI.Sprite.from('resources/pixi-spine/iP4_BGtile.jpg');
+                backgroundU2 = PIXI.Sprite.from('resources/pixi-spine/iP4_BGtile.jpg');
+
+                foregroundU = PIXI.Sprite.from('resources/pixi-spine/iP4_ground.png');
+                foregroundU2 = PIXI.Sprite.from('resources/pixi-spine/iP4_ground.png');
+                foregroundU.anchor.set(0, 0.7);
+                foregroundU.position.y = app.screen.height;
+                foregroundU2.anchor.set(0, 0.7);
+                foregroundU2.position.y = app.screen.height;
+
+                backgroundD = PIXI.Sprite.from('resources/pixi-spine/iP4_BGtile.jpg');
+                backgroundD2 = PIXI.Sprite.from('resources/pixi-spine/iP4_BGtile.jpg');
+
+                foregroundD = PIXI.Sprite.from('resources/pixi-spine/iP4_ground.png');
+                foregroundD2 = PIXI.Sprite.from('resources/pixi-spine/iP4_ground.png');
+                foregroundD.anchor.set(0, 0.7);
+                foregroundD.position.y = app.screen.height;
+                foregroundD2.anchor.set(0, 0.7);
+                foregroundD2.position.y = app.screen.height;
+              
+                app.stage.addChild(backgroundU, backgroundU2, foregroundU, foregroundU2);
+              
+                basicText = new PIXI.Text('Basic text in pixi');
+                basicText.x = 10;
+                basicText.y = 5;     
+                basicText.style.fill="white";
+                app.stage.addChild(basicText);
+              
+                //In runtime, change text by basicText.text = "Hello"        
+                //In runtime, change text by basicText.fill = "white"  
+                //other style properities, 參考 https://pixijs.io/examples/#/text/text.js
+                //const style = new PIXI.TextStyle({
+                //    fontFamily: 'Arial',
+                //    fontSize: 36,
+                //    fontStyle: 'italic',
+                //    fontWeight: 'bold',
+                //    fill: ['#ffffff', '#00ff99'], // gradient
+                //    stroke: '#4a1850',
+                //    strokeThickness: 5,
+                //    dropShadow: true,
+                //    dropShadowColor: '#000000',
+                //    dropShadowBlur: 4,
+                //    dropShadowAngle: Math.PI / 6,
+                //    dropShadowDistance: 6,
+                //    wordWrap: true,
+                //    wordWrapWidth: 440,
+                //});              
+              
+              
+                app1.stage.addChild(backgroundD, backgroundD2, foregroundD, foregroundD2);
+
+                basicText1 = new PIXI.Text('Basic text in pixi');
+                basicText1.x = 10;
+                basicText1.y = 5;     
+                basicText1.style.fill="white";              
+                app1.stage.addChild(basicText1); 
+              
+                pixieU = new PIXI.spine.Spine(res.pixie.spineData);
+                pixieD = new PIXI.spine.Spine(res.pixie.spineData);
+
+                const scale = 0.3;
+         
+                pixieU.x = pixieD.x = 300;//1024 / 3;
+                pixieU.y = pixieD.y = 200;
+              
+                pixieU.scale.x = pixieU.scale.y = scale;
+                pixieD.scale.x = pixieD.scale.y = scale;
+
+                app.stage.addChild(pixieU);
+                app1.stage.addChild(pixieD);
+
+                pixieU.stateData.setMix('running', 'jump', 0.2);
+                pixieU.stateData.setMix('jump', 'running', 0.4);
+                pixieD.stateData.setMix('running', 'jump', 0.2);
+                pixieD.stateData.setMix('jump', 'running', 0.4);
+              
+                pixieU.state.setAnimation(0, 'running', true);
+                pixieD.state.setAnimation(0, 'running', true);
+
+                app.stage.on('pointerdown', onTouchStart);
+
+                function onTouchStart() {
+                  pixieU.state.timeScale = 0.2;
+                  console.log(new Date());
+                  setTimeout( function(){pixieU.state.timeScale = 1;console.log(new Date());}, 2000);                  
+                  pixieU.state.setAnimation(0, 'jump', false);
+                  pixieU.state.addAnimation(0, 'running', true, 0);
+                }
+
+                app.start();
+            }
+
+            app.ticker.add(() => {
+                //console.log(pixie.state.timeScale);
+                postitionU += 10;
+                postitionD += 15;
+
+                backgroundU.x = -(postitionU * 0.6);
+                backgroundU.x %= 1286 * 2;
+                if (backgroundU.x < 0) {
+                    backgroundU.x += 1286 * 2;
+                }
+                backgroundU.x -= 1286;
+              
+                backgroundU2.x = -(postitionU * 0.6) + 1286;
+                backgroundU2.x %= 1286 * 2;
+                if (backgroundU2.x < 0) {
+                    backgroundU2.x += 1286 * 2;
+                }
+                backgroundU2.x -= 1286;
+
+                foregroundU.x = -postitionU;
+                foregroundU.x %= 1286 * 2;
+                if (foregroundU.x < 0) {
+                    foregroundU.x += 1286 * 2;
+                }
+                foregroundU.x -= 1286;
+              
+                foregroundU2.x = -postitionU + 1286;
+                foregroundU2.x %= 1286 * 2;
+                if (foregroundU2.x < 0) {
+                    foregroundU2.x += 1286 * 2;
+                }
+                foregroundU2.x -= 1286;
+              
+              
+                backgroundD.x = -(postitionD * 0.6);
+                backgroundD.x %= 1286 * 2;
+                if (backgroundD.x < 0) {
+                    backgroundD.x += 1286 * 2;
+                }
+                backgroundD.x -= 1286;
+              
+                backgroundD2.x = -(postitionD * 0.6) + 1286;
+                backgroundD2.x %= 1286 * 2;
+                if (backgroundD2.x < 0) {
+                    backgroundD2.x += 1286 * 2;
+                }
+                backgroundD2.x -= 1286;
+
+                foregroundD.x = -postitionD;
+                foregroundD.x %= 1286 * 2;
+                if (foregroundD.x < 0) {
+                    foregroundD.x += 1286 * 2;
+                }
+                foregroundD.x -= 1286;
+
+                foregroundD2.x = -postitionD + 1286;
+                foregroundD2.x %= 1286 * 2;
+                if (foregroundD2.x < 0) {
+                    foregroundD2.x += 1286 * 2;
+                }
+                foregroundD2.x -= 1286;
+            });
+         }
+      </script>
+   </body>
+</html>
